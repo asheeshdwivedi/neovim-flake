@@ -69,7 +69,7 @@
       flake = false;
     };
 
-    # Folds 
+    # Folds
     nvim-ufo = {
       url = github:kevinhwang91/nvim-ufo;
       flake = false;
@@ -246,12 +246,19 @@
       url = github:gvolpe/vim-scala;
       flake = false;
     };
+
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs @ { self, nixpkgs, flake-utils, ... }:
-    let
-      system = "x86_64-linux";
-
+  outputs = {
+    self,
+    nixpkgs,
+    flake-utils,
+    ...
+ } @ inputs: flake-utils.lib.eachDefaultSystem (system: let
       # Plugin must be same as input name
       plugins = [
         "nvim-treesitter-context"
@@ -307,6 +314,19 @@
       pluginOverlay = lib.buildPluginOverlay;
       metalsOverlay = lib.metalsOverlay;
 
+      macIntelOverlay = (self: super:
+        if super.stdenv.isDarwin && super.stdenv.isAarch64 then
+         let intelPkgs = nixpkgs.legacyPackages.x86_64-darwin;
+         in {
+           inherit
+             (intelPkgs)
+             llvmPackages_6
+             llvmPackages_7
+             llvmPackages_8
+             llvmPackages_9
+             llvmPackages_10;
+         } else {});
+
       libOverlay = f: p: {
         lib = p.lib.extend (_: _: {
           inherit (lib) mkVimBool withAttrSet withPlugins writeIf;
@@ -316,7 +336,12 @@
       pkgs = import nixpkgs {
         inherit system;
         config = { allowUnfree = true; };
-        overlays = [ libOverlay pluginOverlay metalsOverlay ];
+        overlays = [
+            macIntelOverlay
+            libOverlay
+            pluginOverlay
+            metalsOverlay
+        ];
       };
 
       metalsBuilder = lib.metalsBuilder;
@@ -327,17 +352,17 @@
       };
     in
     rec {
-      apps.${system} = rec {
+      apps = rec {
         nvim = {
           type = "app";
-          program = "${packages.${system}.default}/bin/nvim";
+          program = "${packages.default}/bin/nvim";
         };
 
         default = nvim;
       };
 
-      devShells.${system}.default = pkgs.mkShell {
-        buildInputs = [ packages.${system}.neovim-ide ];
+      devShells.default = pkgs.mkShell {
+        buildInputs = [ packages.neovim-ide ];
       };
 
       overlays.default = f: p: {
@@ -352,10 +377,10 @@
         ];
       };
 
-      packages.${system} = rec {
+      packages = rec {
         default = neovim-ide;
         metals = pkgs.metals;
         neovim-ide = neovim-ide-full;
       };
-    };
+    });
 }

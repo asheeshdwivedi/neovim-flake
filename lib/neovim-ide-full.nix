@@ -29,9 +29,9 @@ neovimBuilder {
         };
         rust.enable = false;
         nix = true;
-        dhall = true;
-        elm = true;
-        haskell = true;
+        dhall = false;
+        elm = false;
+        haskell = false;
         sql = true;
         python = false;
         clang = false;
