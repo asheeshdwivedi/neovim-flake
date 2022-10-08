@@ -37,6 +37,7 @@ with lib; {
             clang = false;
             ts = false;
             go = false;
+            json = true;
           };
         }
       '';

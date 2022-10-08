@@ -24,7 +24,7 @@ in
     dhall = mkEnableOption "Dhall LSP";
     elm = mkEnableOption "Elm LSP";
     haskell = mkEnableOption "Haskell LSP (hls)";
-
+    json = mkEnableOption "Enable JSON";
     scala = {
       enable = mkEnableOption "Scala LSP (Metals)";
       metals = mkOption {
@@ -133,7 +133,7 @@ in
         vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lgt', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
         vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lgn', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
         vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lgp', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-      
+
         -- Alternative keybinding for code actions for when code-action-menu does not work as expected.
         vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
 
@@ -145,6 +145,7 @@ in
         vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lsh', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
         vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>ln', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
         vim.api.nvim_buf_set_keymap(bufnr, 'n', 'F', '<cmd>lua vim.lsp.buf.format { async = true }<CR>', opts)
+        vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lcl', '<cmd>lua vim.lsp.codelens.run()<CR>', opts)
 
         ${writeIf cfg.scala.enable ''
         -- Metals specific
@@ -278,7 +279,7 @@ in
         })
 
         -- Using ufo provider needs a large value
-        vim.o.foldlevel = 99 
+        vim.o.foldlevel = 99
         vim.o.foldlevelstart = 99
         vim.o.foldenable = true
 
@@ -451,7 +452,11 @@ in
         -- Scala nvim-metals config
         metals_config = require('metals').bare_config()
         metals_config.capabilities = capabilities
-        metals_config.on_attach = default_on_attach
+        metals_config.on_attach = function(client, bufnr)
+            require("metals").setup_dap()
+            attach_keymaps(client, bufnr)
+            format_callback(client, bufnr)
+        end
 
         metals_config.settings = {
            metalsBinaryPath = "${cfg.scala.metals}/bin/metals",
@@ -513,5 +518,22 @@ in
         }
       ''}
     '';
+
+       ${writeIf cfg.json ''
+              lspconfig.jsonls.setup {
+                capabilities = capabilities;
+                on_attach = default_on_attach;
+                cmd = {'${pkgs.nodePackages.vscode-json-languageserver-bin}/bin/json-languageserver', '--stdio' };
+                filetypes = { "html", "css", "javascript" };
+                commands = {
+                    Format = {
+                       function()
+                         vim.lsp.buf.range_formatting({},{0,0},{vim.fn.line("$"),0})
+                       end
+                    }
+                }
+              }
+            ''}
+          '';
   };
 }

@@ -31,5 +31,7 @@
     ./todo
     ./treesitter
     ./visuals
+    ./terminal
+    ./dap
   ];
 }

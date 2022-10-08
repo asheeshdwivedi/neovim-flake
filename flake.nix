@@ -314,7 +314,28 @@
       url = github:MunifTanjim/nui.nvim;
       flake = false;
     };
+    nvim-terminal = {
+          url = "github:s1n7ax/nvim-terminal";
+          flake = false;
+        };
+        nvim-dap = {
+            url = "github:mfussenegger/nvim-dap";
+            flake = false;
+        };
+        telescope-dap = {
+            url = "github:nvim-telescope/telescope-dap.nvim";
+            flake = false;
+        };
+        nvim-dap-virtual-text = {
+            url = "github:theHamsta/nvim-dap-virtual-text";
+            flake = false;
+        };
+        nvim-dap-ui = {
+            url = "github:rcarriga/nvim-dap-ui";
+            flake = false;
+        };
   };
+
 
   outputs = inputs @ { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:

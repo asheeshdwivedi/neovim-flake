@@ -40,6 +40,7 @@ let
         python = false;
         clang = false;
         go = false;
+        json = true;
       };
       plantuml.enable = false;
       fx.automaton.enable = true;
@@ -128,7 +129,9 @@ let
       dial.enable = true;
       hop.enable = true;
       notifications.enable = true;
+      nvim-terminal.enable = true;
       todo.enable = true;
+      nvim-dap.enable = true;
     };
   };
 
