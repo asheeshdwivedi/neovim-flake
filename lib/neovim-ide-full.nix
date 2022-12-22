@@ -27,17 +27,22 @@ neovimBuilder {
           metals = pkgs.metals;
           type = "nvim-metals";
         };
+        nix = {
+          enable = true;
+          type = "nil";
+        };
         rust.enable = false;
-        nix = true;
+        ts = false;
+        smithy = false;
         dhall = false;
         elm = false;
         haskell = false;
         sql = true;
         python = false;
         clang = false;
-        ts = false;
         go = false;
       };
+      plantuml.enable = false;
       visuals = {
         enable = true;
         nvimWebDevicons.enable = true;
@@ -55,13 +60,13 @@ neovimBuilder {
       };
       statusline.lualine = {
         enable = true;
-        theme = "catppuccin";
+        theme = "onedark";
       };
       theme = {
         enable = true;
-        name = "catppuccin";
-        style = "macchiato";
-        transparency = false;
+        name = "onedark";
+        style = "deep";
+        transparency = true;
       };
       autopairs.enable = true;
       autocomplete = {

@@ -5,6 +5,13 @@ with builtins;
 
 let
   cfg = config.vim.lsp;
+
+  # Smithy packages
+  cs = "${pkgs.coursier}/bin/cs";
+  sls = {
+    name = "com.disneystreaming.smithy:smithy-language-server";
+    version = "0.0.20";
+  };
 in
 {
   options.vim.lsp = {
@@ -12,7 +19,15 @@ in
     folds = mkEnableOption "Folds via nvim-ufo";
     formatOnSave = mkEnableOption "Format on save";
 
-    nix = mkEnableOption "Nix LSP";
+    nix = {
+      enable = mkEnableOption "Nix LSP";
+      type = mkOption {
+        type = types.enum [ "nil" "rnix-lsp" ];
+        default = "rnix-lsp";
+        description = "Whether to use `nil` or `rnix-lsp`";
+      };
+    };
+
     dhall = mkEnableOption "Dhall LSP";
     elm = mkEnableOption "Elm LSP";
     haskell = mkEnableOption "Haskell LSP (hls)";
@@ -31,6 +46,7 @@ in
       };
     };
 
+    smithy = mkEnableOption "Smithy Language LSP";
     sql = mkEnableOption "SQL Language LSP";
     ts = mkEnableOption "TS language LSP";
 
@@ -60,7 +76,7 @@ in
         (withPlugins (config.vim.autocomplete.enable && (config.vim.autocomplete.type == "nvim-cmp")) [ cmp-nvim-lsp ]) ++
         (withPlugins cfg.sql [ sqls-nvim ]) ++
         (withPlugins (cfg.scala.enable && cfg.scala.type == "nvim-metals") [ nvim-metals ]) ++
-        (withPlugins cfg.folds [ promise-async nvim-ufo ]) ++ 
+        (withPlugins cfg.folds [ promise-async nvim-ufo ]) ++
         (withPlugins cfg.rust.enable [ crates-nvim rust-tools ]);
 
       vim.configRC = ''
@@ -81,7 +97,7 @@ in
           ''
         }
 
-        ${writeIf cfg.nix ''
+        ${writeIf cfg.nix.enable ''
             autocmd filetype nix setlocal tabstop=2 shiftwidth=2 softtabstop=2
           ''
         }
@@ -121,7 +137,7 @@ in
           vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>lh', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
           vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>ls', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
           vim.api.nvim_buf_set_keymap(bufnr, 'n', '<leader>ln', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-          vim.api.nvim_buf_set_keymap(bufnr, 'n', 'F', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
+          vim.api.nvim_buf_set_keymap(bufnr, 'n', 'F', '<cmd>lua vim.lsp.buf.format { async = true }<CR>', opts)
         end
 
         local null_ls = require("null-ls")
@@ -320,7 +336,26 @@ in
           }
         ''}
 
-        ${writeIf cfg.nix ''
+        ${writeIf (cfg.nix.enable && cfg.nix.type == "nil") ''
+          -- Nix config
+          lspconfig.nil_ls.setup{
+            capabilities = capabilities;
+            on_attach = function(client, bufnr)
+              attach_keymaps(client, bufnr)
+            end,
+            settings = {
+              ['nil'] = {
+                diagnostics = {
+                  ignored = { "uri_literal" },
+                  excludedFiles = { }
+                }
+              }
+            };
+            cmd = {"${pkgs.nil}/bin/nil"}
+          }
+        ''}
+
+        ${writeIf (cfg.nix.enable && cfg.nix.type == "rnix-lsp") ''
           -- Nix config
           lspconfig.rnix.setup{
             capabilities = capabilities;
@@ -446,12 +481,26 @@ in
           vim.cmd([[augroup end]])
         ''}
 
-        ${writeIf cfg.nix
+        ${writeIf cfg.nix.enable
         ''
           -- Nix formatter
           null_ls.builtins.formatting.alejandra.with({
             command = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
           });
+        ''}
+
+        ${writeIf cfg.smithy ''
+          -- Smithy config
+          vim.cmd([[au BufRead,BufNewFile *.smithy setfiletype smithy]])
+
+          lspconfig.smithy.setup {
+            capabilities = capabilities;
+            on_attach = function(client, bufnr)
+              attach_keymaps(client, bufnr)
+            end,
+            cmd = { '${cs}', 'launch', '${sls.name}:${sls.version}', '--' , '0' },
+            root_dir = lspconfig.util.root_pattern("smithy-build.json")
+          }
         ''}
 
         ${writeIf cfg.ts ''
