@@ -1,7 +1,6 @@
 { config, lib, pkgs, ... }:
 
 with lib;
-with builtins;
 
 let
   cfg = config.vim.hop;
@@ -14,7 +13,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable ({
+  config = mkIf cfg.enable {
     vim.startPlugins = [ pkgs.neovimPlugins.hop ];
 
     vim.nnoremap = {
@@ -24,5 +23,5 @@ in
     vim.luaConfigRC = ''
       require('hop').setup()
     '';
-  });
+  };
 }

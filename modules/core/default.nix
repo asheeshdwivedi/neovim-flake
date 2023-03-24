@@ -6,12 +6,6 @@ with builtins;
 let
   cfg = config.vim;
 
-  wrapLuaConfig = luaConfig: ''
-    lua << EOF
-    ${luaConfig}
-    EOF
-  '';
-
   mkMappingOption = it:
     mkOption ({
       default = { };
@@ -30,6 +24,26 @@ in
       description = "Enable vim alias";
       type = types.bool;
       default = true;
+    };
+
+    startConfigRC = mkOption {
+      description = "start of vimrc contents";
+      type = types.lines;
+      default = "";
+    };
+
+    finalConfigRC = mkOption {
+      description = "built vimrc contents";
+      type = types.lines;
+      internal = true;
+      default = "";
+    };
+
+    finalKeybindings = mkOption {
+      description = "built Keybindings in vimrc contents";
+      type = types.lines;
+      internal = true;
+      default = "";
     };
 
     configRC = mkOption {
@@ -118,16 +132,72 @@ in
 
     tmap =
       mkMappingOption { description = "Defines 'Terminal mode' mappings"; };
+
+    # Source: https://github.com/NixOS/nixpkgs/blob/nixos-unstable/nixos/modules/programs/neovim.nix
+    runtime = mkOption {
+      default = { };
+      example = literalExpression ''
+        { "ftplugin/c.vim".text = "setlocal omnifunc=v:lua.vim.lsp.omnifunc"; }
+      '';
+      description = lib.mdDoc ''
+        Set of files that have to be linked in {file}`runtime`.
+      '';
+
+      type = with types; attrsOf (submodule (
+        { name, config, ... }:
+        {
+          options = {
+
+            enable = mkOption {
+              type = types.bool;
+              default = true;
+              description = lib.mdDoc ''
+                Whether this /etc file should be generated.  This
+                option allows specific /etc files to be disabled.
+              '';
+            };
+
+            target = mkOption {
+              type = types.str;
+              description = lib.mdDoc ''
+                Name of symlink.  Defaults to the attribute
+                name.
+              '';
+            };
+
+            text = mkOption {
+              default = null;
+              type = types.nullOr types.lines;
+              description = lib.mdDoc "Text of the file.";
+            };
+
+            source = mkOption {
+              type = types.path;
+              description = lib.mdDoc "Path of the source file.";
+            };
+
+          };
+
+          config = {
+            target = mkDefault name;
+            source = mkIf (config.text != null) (
+              let name' = "neovim-runtime" + baseNameOf name;
+              in mkDefault (pkgs.writeText name' config.text)
+            );
+          };
+        }
+      ));
+    };
   };
 
   config =
     let
-      filterNonNull = mappings: filterAttrs (name: value: value != null) mappings;
+      filterNonNull = filterAttrs (name: value: value != null);
       globalsScript =
         mapAttrsFlatten (name: value: "let g:${name}=${toJSON value}")
           (filterNonNull cfg.globals);
 
-      matchCtrl = it: match "Ctrl-(.)(.*)" it;
+      matchCtrl = match "Ctrl-(.)(.*)";
       mapKeyBinding = it:
         let
           groups = matchCtrl it;
@@ -158,27 +228,35 @@ in
       tnoremap = mapVimBinding "tnoremap" config.vim.tnoremap;
     in
     {
-      vim.configRC = ''
+      vim.finalConfigRC = ''
+        " Basic configuration
+        ${cfg.startConfigRC}
+
+        " Global scripts
         ${concatStringsSep "\n" globalsScript}
-        " Lua config from vim.luaConfigRC
-        ${wrapLuaConfig
-          (concatStringsSep "\n" [cfg.startLuaConfigRC cfg.luaConfigRC])}
-          ${builtins.concatStringsSep "\n" nmap}
-          ${builtins.concatStringsSep "\n" imap}
-          ${builtins.concatStringsSep "\n" vmap}
-          ${builtins.concatStringsSep "\n" xmap}
-          ${builtins.concatStringsSep "\n" smap}
-          ${builtins.concatStringsSep "\n" cmap}
-          ${builtins.concatStringsSep "\n" omap}
-          ${builtins.concatStringsSep "\n" tmap}
-          ${builtins.concatStringsSep "\n" nnoremap}
-          ${builtins.concatStringsSep "\n" inoremap}
-          ${builtins.concatStringsSep "\n" vnoremap}
-          ${builtins.concatStringsSep "\n" xnoremap}
-          ${builtins.concatStringsSep "\n" snoremap}
-          ${builtins.concatStringsSep "\n" cnoremap}
-          ${builtins.concatStringsSep "\n" onoremap}
-          ${builtins.concatStringsSep "\n" tnoremap}
+
+        " Config RC
+        ${cfg.configRC}
+      '';
+
+      vim.finalKeybindings = ''
+        " Keybindings
+        ${builtins.concatStringsSep "\n" nmap}
+        ${builtins.concatStringsSep "\n" imap}
+        ${builtins.concatStringsSep "\n" vmap}
+        ${builtins.concatStringsSep "\n" xmap}
+        ${builtins.concatStringsSep "\n" smap}
+        ${builtins.concatStringsSep "\n" cmap}
+        ${builtins.concatStringsSep "\n" omap}
+        ${builtins.concatStringsSep "\n" tmap}
+        ${builtins.concatStringsSep "\n" nnoremap}
+        ${builtins.concatStringsSep "\n" inoremap}
+        ${builtins.concatStringsSep "\n" vnoremap}
+        ${builtins.concatStringsSep "\n" xnoremap}
+        ${builtins.concatStringsSep "\n" snoremap}
+        ${builtins.concatStringsSep "\n" cnoremap}
+        ${builtins.concatStringsSep "\n" onoremap}
+        ${builtins.concatStringsSep "\n" tnoremap}
       '';
     };
 }

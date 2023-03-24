@@ -8,19 +8,17 @@ with builtins;
 let
   inherit (prev.vimUtils) buildVimPluginFrom2Nix;
 
-  tree-sitter-scala3 = inputs.ts-build.lib.buildGrammar pkgs {
-    language = "scala";
-    version = "eed3si9n-fork";
-    source = inputs.tree-sitter-scala;
-  };
-
   ts = prev.tree-sitter.override {
-    extraGrammars = { inherit tree-sitter-scala3; };
+    extraGrammars = {
+      tree-sitter-scala = final.tree-sitter-scala-master;
+      tree-sitter-tsx = final.tree-sitter-tsx-master;
+      tree-sitter-typescript = final.tree-sitter-tsx-master;
+    };
   };
 
   treesitterGrammars = ts.withPlugins (p: [
+    p.tree-sitter-scala
     p.tree-sitter-c
-    p.tree-sitter-scala3
     p.tree-sitter-nix
     p.tree-sitter-elm
     p.tree-sitter-haskell
@@ -31,6 +29,7 @@ let
     p.tree-sitter-toml
     p.tree-sitter-make
     p.tree-sitter-tsx
+    p.tree-sitter-typescript
     p.tree-sitter-html
     p.tree-sitter-javascript
     p.tree-sitter-css
@@ -66,11 +65,21 @@ let
       '
   '';
 
-  nvimTreesitterHook = ''
+  # sync queries of tree-sitter-scala and nvim-treesitter
+  queriesHook = ''
+    cp ${inputs.tree-sitter-scala}/queries/scala/* $out/queries/scala/
+    cp ${ts.builtGrammars.tree-sitter-smithy}/queries/highlights.scm $out/queries/smithy/highlights.scm
+  '';
+
+  tsPreFixupHook = ''
+    ${queriesHook}
+
+    ${smithyParserHook}
+  '';
+
+  tsPostPatchHook = ''
     rm -r parser
     ln -s ${treesitterGrammars} parser
-    mkdir -p $out/queries/smithy
-    cp ${ts.builtGrammars.tree-sitter-smithy}/queries/highlights.scm $out/queries/smithy/highlights.scm
   '';
 
   buildPlug = name:
@@ -80,10 +89,10 @@ let
       src = builtins.getAttr name inputs;
       preFixup = ''
         ${writeIf (name == "nvim-lspconfig") smithyLspHook}
-        ${writeIf (name == "nvim-treesitter") smithyParserHook}
+        ${writeIf (name == "nvim-treesitter") tsPreFixupHook}
       '';
       postPatch = ''
-        ${writeIf (name == "nvim-treesitter") nvimTreesitterHook}
+        ${writeIf (name == "nvim-treesitter") tsPostPatchHook}
       '';
     };
 
