@@ -25,9 +25,28 @@
 
     # Neovim plugins
 
+    # AI plugins
+    nvim-chatgpt = {
+      #url = github:jackMort/ChatGPT.nvim;
+      #url = git+file:///home/gvolpe/workspace/ChatGPT.nvim;
+      url = github:gvolpe/ChatGPT.nvim;
+      flake = false;
+    };
+
+    # Notifications
+    nvim-notify = {
+      url = github:rcarriga/nvim-notify;
+      flake = false;
+    };
+
     # Text objects
     nvim-surround = {
       url = github:kylechui/nvim-surround;
+      flake = false;
+    };
+
+    nvim-spider = {
+      url = github:chrisgrieser/nvim-spider;
       flake = false;
     };
 
@@ -46,6 +65,10 @@
       url = github:nvim-treesitter/nvim-treesitter;
       flake = false;
     };
+    nvim-treesitter-textobjects = {
+      url = github:nvim-treesitter/nvim-treesitter-textobjects;
+      flake = false;
+    };
     lspsaga = {
       url = github:tami5/lspsaga.nvim;
       flake = false;
@@ -59,7 +82,7 @@
       flake = false;
     };
     nvim-treesitter-context = {
-      url = github:lewis6991/nvim-treesitter-context;
+      url = github:nvim-treesitter/nvim-treesitter-context;
       flake = false;
     };
     nvim-lightbulb = {
@@ -269,20 +292,31 @@
       flake = false;
     };
 
-    # Plenary (required by crates-nvim)
-    plenary-nvim = {
-      url = github:nvim-lua/plenary.nvim;
-      flake = false;
-    };
-
     # Plant UML syntax highlights
     vim-plantuml = {
       url = github:aklt/plantuml-syntax;
       flake = false;
     };
+
+    # Enhanced incr/decr functionality
+    dial-nvim = {
+      url = github:monaqa/dial.nvim;
+      flake = false;
+    };
+
+    # Dependencies of other plugins
+    plenary-nvim = {
+      url = github:nvim-lua/plenary.nvim;
+      flake = false;
+    };
+
+    nvim-nui = {
+      url = github:MunifTanjim/nui.nvim;
+      flake = false;
+    };
   };
 
-  outputs = inputs @ { self, nixpkgs, flake-utils, ... }:
+  outputs = inputs @ { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         plugins =
@@ -401,6 +435,7 @@
 
           # Main languages enabled
           ide = default-ide.full.neovim;
+          nightly = default-ide.full-nightly.neovim;
 
           # Only Haskell (quite heavy)
           haskell = default-ide.haskell.neovim;

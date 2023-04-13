@@ -32,7 +32,7 @@ let
         };
         rust.enable = false;
         ts = false;
-        smithy = false;
+        smithy.enable = false;
         dhall = false;
         elm = false;
         haskell = false;
@@ -85,9 +85,6 @@ let
         autotagHtml = true;
         context.enable = true;
       };
-      scala = {
-        highlightMode = "treesitter";
-      };
       keys = {
         enable = true;
         whichKey.enable = true;
@@ -120,7 +117,17 @@ let
           statePath = "~/.local/share/mind.nvim/mind.json";
         };
       };
+      chatgpt = {
+        enable = false;
+        openaiApiKey = null;
+      };
+      spider = {
+        enable = true;
+        skipInsignificantPunctuation = true;
+      };
+      dial.enable = true;
       hop.enable = true;
+      notifications.enable = true;
       todo.enable = true;
     };
   };
@@ -128,7 +135,7 @@ let
   langs = {
     vim.lsp = {
       ts = true;
-      smithy = true;
+      smithy.enable = true;
       dhall = true;
       elm = true;
     };
@@ -176,6 +183,10 @@ let
 in
 {
   full = neovimBuilder {
+    config = deepMerge (deepMerge cfg langs) nightly;
+  };
+
+  full-nightly = neovimBuilder {
     config = deepMerge cfg langs;
   };
 

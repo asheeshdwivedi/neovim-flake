@@ -1,12 +1,14 @@
-{ config, lib, pkgs, ... }:
+{ ... }:
 
 {
   imports = [
     ./autopairs
     ./basic
+    ./chatgpt
     ./comments
     ./completion
     ./core
+    ./dial
     ./filetree
     ./fx
     ./git
@@ -17,9 +19,10 @@
     ./mind
     ./neoclip
     ./neovim
+    ./notifications
     ./plantuml
-    ./scala
     ./snippets
+    ./spider
     ./statusline
     ./surround
     ./tabline
