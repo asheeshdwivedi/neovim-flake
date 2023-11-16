@@ -13,6 +13,7 @@ let
       tree-sitter-scala = final.tree-sitter-scala-master;
       tree-sitter-tsx = final.tree-sitter-tsx-master;
       tree-sitter-typescript = final.tree-sitter-tsx-master;
+      tree-sitter-python = final.tree-sitter-python-master;
     };
   };
 
@@ -36,6 +37,8 @@ let
     p.tree-sitter-graphql
     p.tree-sitter-json
     p.tree-sitter-smithy
+    p.tree-sitter-python
+    p.tree-sitter-hcl
   ]);
 
   smithy-lsp = pkgs.callPackage ./smithy-lspconfig.nix { };

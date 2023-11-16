@@ -23,13 +23,19 @@
       flake = false;
     };
 
+    tree-sitter-python = {
+       url = github:tree-sitter/tree-sitter-python;
+       flake = false;
+    };
+
+
     # Neovim plugins
 
     # AI plugins
     nvim-chatgpt = {
-      #url = github:jackMort/ChatGPT.nvim;
+      url = github:jackMort/ChatGPT.nvim;
       #url = git+file:///home/gvolpe/workspace/ChatGPT.nvim;
-      url = github:gvolpe/ChatGPT.nvim;
+      #url = github:gvolpe/ChatGPT.nvim;
       flake = false;
     };
 
@@ -353,6 +359,7 @@
               "ts-build"
               "tree-sitter-scala"
               "tree-sitter-typescript"
+              "tree-sitter-python"
             ];
           in
           builtins.attrNames (f nonPluginInputNames inputs);
@@ -394,6 +401,12 @@
             language = "tsx";
             version = inputs.tree-sitter-typescript.rev;
             src = inputs.tree-sitter-typescript;
+          };
+
+          tree-sitter-python-master = p.tree-sitter.buildGrammar {
+              language = "python";
+              version = inputs.tree-sitter-python.rev;
+              src = inputs.tree-sitter-python;
           };
         };
 

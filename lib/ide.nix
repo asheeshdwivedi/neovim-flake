@@ -41,6 +41,7 @@ let
         clang = false;
         go = false;
         json = true;
+        hcl = true;
       };
       plantuml.enable = false;
       fx.automaton.enable = true;

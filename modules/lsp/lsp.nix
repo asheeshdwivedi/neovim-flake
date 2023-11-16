@@ -75,6 +75,7 @@ in
     python = mkEnableOption "Python LSP";
     clang = mkEnableOption "C language LSP";
     go = mkEnableOption "Go language LSP";
+    hcl = mkEnableOption "hcl language LSP";
   };
 
   config = mkIf cfg.enable {
@@ -517,6 +518,22 @@ in
           cmd = { "${pkgs.nodePackages.typescript-language-server}/bin/typescript-language-server", "--stdio" }
         }
       ''}
+
+        ${writeIf cfg.hcl ''
+           -- Terraform config
+            lspconfig.terraformls.setup {
+                capabilities = capabilities;
+                on_attach = default_on_attach;
+                cmd = {"${pkgs.terraform-ls}/bin/terraform-ls", "serve"};
+                root_dir =  lspconfig.util.root_pattern(".terraform", ".git")
+           }
+            lspconfig.tflint.setup{
+                capabilities = capabilities;
+                on_attach = default_on_attach;
+                cmd = {"${pkgs.tflint}/bin/tflint", "--langserver"};
+                root_dir =  lspconfig.util.root_pattern(".terraform", ".git", ".tflint.hcl")
+            }
+       ''}
 
        ${writeIf cfg.json ''
               lspconfig.jsonls.setup {

@@ -23,7 +23,7 @@ in
 
     vim.luaConfigRC = ''
       require("chatgpt").setup({
-        ${if cfg.openaiApiKey != null then ''openai_api_key = "${cfg.openaiApiKey}"'' else ""}
+         api_key_cmd = "echo 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"
       })
     '';
   };
